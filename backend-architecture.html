@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkAny 后端架构图</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      background: #f8f9fa;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .legend-color {
+      width: 30px;
+      height: 20px;
+      border-radius: 4px;
+      border: 2px solid #333;
+    }
+
+    .info-box {
+      margin-top: 20px;
+      padding: 20px;
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .info-box strong {
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WorkAny 后端架构图</h1>
+    <p class="subtitle">基于 Hono 框架的 AI Agent API 服务器 | v0.1.16</p>
+
+    <div class="canvas-wrapper">
+      <canvas id="architecture"></canvas>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background: #FF6B6B;"></div>
+        <span>API 路由层</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #4ECDC4;"></div>
+        <span>核心业务层</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #95E1D3;"></div>
+        <span>扩展插件层</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #F38181;"></div>
+        <span>共享服务层</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #AA96DA;"></div>
+        <span>数据存储</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #FCBAD3;"></div>
+        <span>配置文件</span>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>架构说明：</strong>
+      <ul style="margin-left: 20px; margin-top: 10px;">
+        <li>无传统数据库，使用 <strong>内存 Map</strong> 存储会话和计划</li>
+        <li>支持多种沙箱提供商（Codex、Claude、Native）</li>
+        <li>支持多种 Agent 提供商（Claude、Codex、DeepAgents）</li>
+        <li>配置文件持久化在用户目录（JSON 格式）</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('architecture');
+    const ctx = canvas.getContext('2d');
+
+    // 设置画布大小
+    const width = 1300;
+    const height = 900;
+    canvas.width = width;
+    canvas.height = height;
+
+    // 颜色配置
+    const colors = {
+      api: '#FF6B6B',
+      core: '#4ECDC4',
+      extension: '#95E1D3',
+      shared: '#F38181',
+      data: '#AA96DA',
+      config: '#FCBAD3',
+      border: '#2D3436',
+      text: '#2D3436',
+      lightText: '#636E72',
+      arrow: '#2D3436',
+      background: '#FFFFFF'
+    };
+
+    // 绘制圆角矩形
+    function drawRoundedRect(x, y, w, h, radius, fillColor, strokeColor = colors.border) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+
+      if (fillColor) {
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+      }
+
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // 绘制文本
+    function drawText(text, x, y, fontSize = 14, fontWeight = 'normal', color = colors.text) {
+      ctx.font = `${fontWeight} ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x, y);
+    }
+
+    // 绘制箭头
+    function drawArrow(fromX, fromY, toX, toY) {
+      const headlen = 10;
+      const angle = Math.atan2(toY - fromY, toX - fromX);
+
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.strokeStyle = colors.arrow;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 箭头头部
+      ctx.beginPath();
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fillStyle = colors.arrow;
+      ctx.fill();
+    }
+
+    // 绘制双向箭头
+    function drawDoubleArrow(x1, y1, x2, y2) {
+      const headlen = 8;
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = colors.arrow;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 起点箭头
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 + headlen * Math.cos(angle - Math.PI / 6), y1 + headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x1 + headlen * Math.cos(angle + Math.PI / 6), y1 + headlen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fillStyle = colors.arrow;
+      ctx.fill();
+
+      // 终点箭头
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // ========== 绘制架构图 ==========
+
+    // 1. 顶部：客户端/前端
+    drawRoundedRect(550, 20, 200, 50, 10, colors.config);
+    drawText('前端应用', 650, 45, 16, 'bold', 'white');
+
+    // 2. API 路由层
+    const apiY = 100;
+    const apiModules = [
+      { name: '/agent', x: 200 },
+      { name: '/sandbox', x: 350 },
+      { name: '/health', x: 500 },
+      { name: '/mcp', x: 620 },
+      { name: '/providers', x: 750 },
+      { name: '/files', x: 900 },
+      { name: '/preview', x: 1050 }
+    ];
+
+    drawRoundedRect(150, apiY, 1100, 60, 10, colors.api);
+    drawText('API 路由层 (Hono)', 700, apiY + 20, 16, 'bold', 'white');
+
+    apiModules.forEach(module => {
+      drawRoundedRect(module.x, apiY + 35, 100, 20, 5, 'rgba(255,255,255,0.3)');
+      drawText(module.name, module.x + 50, apiY + 45, 11, 'normal', 'white');
+    });
+
+    // 前端到 API 的箭头
+    drawArrow(650, 70, 650, 100);
+
+    // 3. 核心业务层
+    const coreY = 200;
+    drawRoundedRect(150, coreY, 1100, 80, 10, colors.core);
+
+    drawText('核心业务层', 700, coreY + 20, 16, 'bold', 'white');
+
+    // Agent Core
+    drawRoundedRect(180, coreY + 35, 140, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Agent Core', 250, coreY + 52, 13, 'bold');
+    drawText('会话管理', 250, coreY + 65, 10, colors.lightText);
+
+    // Sandbox Core
+    drawRoundedRect(340, coreY + 35, 140, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Sandbox Core', 410, coreY + 52, 13, 'bold');
+    drawText('沙箱管理', 410, coreY + 65, 10, colors.lightText);
+
+    // Provider Registry
+    drawRoundedRect(500, coreY + 35, 160, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Provider Registry', 580, coreY + 52, 13, 'bold');
+    drawText('提供商注册表', 580, coreY + 65, 10, colors.lightText);
+
+    // Plugin System
+    drawRoundedRect(680, coreY + 35, 140, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Plugin System', 750, coreY + 52, 13, 'bold');
+    drawText('插件系统', 750, coreY + 65, 10, colors.lightText);
+
+    // Config Manager
+    drawRoundedRect(840, coreY + 35, 140, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Config Manager', 910, coreY + 52, 13, 'bold');
+    drawText('配置管理', 910, coreY + 65, 10, colors.lightText);
+
+    // Skill System
+    drawRoundedRect(1000, coreY + 35, 140, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Skill System', 1070, coreY + 52, 13, 'bold');
+    drawText('技能系统', 1070, coreY + 65, 10, colors.lightText);
+
+    // API 到 Core 的箭头
+    drawArrow(700, 160, 700, 200);
+
+    // 4. 扩展插件层
+    const extY = 310;
+    drawRoundedRect(150, extY, 1100, 80, 10, colors.extension);
+
+    drawText('扩展插件层', 700, extY + 20, 16, 'bold', 'white');
+
+    // Agent 扩展
+    drawRoundedRect(180, extY + 35, 180, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Agent 扩展', 270, extY + 50, 12, 'bold');
+    drawText('Claude | Codex | DeepAgents', 270, extY + 63, 9, colors.lightText);
+
+    // Sandbox 扩展
+    drawRoundedRect(380, extY + 35, 200, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Sandbox 扩展', 480, extY + 50, 12, 'bold');
+    drawText('Codex | Claude | Native', 480, extY + 63, 9, colors.lightText);
+
+    // MCP 扩展
+    drawRoundedRect(600, extY + 35, 160, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('MCP 扩展', 680, extY + 50, 12, 'bold');
+    drawText('服务器管理', 680, extY + 63, 9, colors.lightText);
+
+    // 扩展说明
+    drawRoundedRect(780, extY + 35, 460, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('可动态加载和扩展的插件系统', 1010, extY + 52, 12, 'bold');
+    drawText('支持自定义 Agent 和 Sandbox 提供商', 1010, extY + 65, 9, colors.lightText);
+
+    // Core 到 Extension 的箭头
+    drawArrow(700, 280, 700, 310);
+
+    // 5. 共享服务层
+    const sharedY = 420;
+    drawRoundedRect(150, sharedY, 1100, 80, 10, colors.shared);
+
+    drawText('共享服务层', 700, sharedY + 20, 16, 'bold', 'white');
+
+    // MCP Loader
+    drawRoundedRect(180, sharedY + 35, 150, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('MCP Loader', 255, sharedY + 52, 12, 'bold');
+    drawText('配置加载器', 255, sharedY + 65, 9, colors.lightText);
+
+    // Provider Manager
+    drawRoundedRect(350, sharedY + 35, 170, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Provider Manager', 435, sharedY + 52, 12, 'bold');
+    drawText('提供商管理器', 435, sharedY + 65, 9, colors.lightText);
+
+    // Preview Service
+    drawRoundedRect(540, sharedY + 35, 160, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Preview Service', 620, sharedY + 52, 12, 'bold');
+    drawText('预览服务管理', 620, sharedY + 65, 9, colors.lightText);
+
+    // Skills Manager
+    drawRoundedRect(720, sharedY + 35, 160, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Skills Manager', 800, sharedY + 52, 12, 'bold');
+    drawText('技能管理器', 800, sharedY + 65, 9, colors.lightText);
+
+    // Utils
+    drawRoundedRect(900, sharedY + 35, 120, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Utils', 960, sharedY + 52, 12, 'bold');
+    drawText('工具函数', 960, sharedY + 65, 9, colors.lightText);
+
+    // Types
+    drawRoundedRect(1040, sharedY + 35, 120, 35, 8, 'rgba(255,255,255,0.4)');
+    drawText('Types', 1100, sharedY + 52, 12, 'bold');
+    drawText('类型定义', 1100, sharedY + 65, 9, colors.lightText);
+
+    // Extension 到 Shared 的箭头
+    drawArrow(700, 390, 700, 420);
+
+    // 6. 数据存储层
+    const dataY = 530;
+    drawRoundedRect(150, dataY, 400, 120, 10, colors.data);
+
+    drawText('内存数据存储', 350, dataY + 20, 16, 'bold', 'white');
+    drawText('Map<string, T>', 350, dataY + 40, 12, colors.lightText);
+
+    // Sessions Map
+    drawRoundedRect(180, dataY + 55, 170, 55, 8, 'rgba(255,255,255,0.4)');
+    drawText('Sessions Map', 265, dataY + 75, 13, 'bold');
+    drawText('会话存储', 265, dataY + 90, 10, colors.lightText);
+    drawText('Agent 执行会话', 265, dataY + 103, 9, colors.lightText);
+
+    // Plans Map
+    drawRoundedRect(370, dataY + 55, 170, 55, 8, 'rgba(255,255,255,0.4)');
+    drawText('Plans Map', 455, dataY + 75, 13, 'bold');
+    drawText('计划存储', 455, dataY + 90, 10, colors.lightText);
+    drawText('执行计划 (TTL)', 455, dataY + 103, 9, colors.lightText);
+
+    // 运行时状态
+    drawRoundedRect(180, dataY + 65, 360, 100, 8, colors.data);
+    drawText('运行时状态 (Map)', 360, dataY + 85, 13, 'bold', 'white');
+    drawText('Preview Servers', 230, dataY + 105, 10, colors.lightText);
+    drawText('Provider Registry', 360, dataY + 105, 10, colors.lightText);
+    drawText('Provider Instances', 490, dataY + 105, 10, colors.lightText);
+    drawText('重启后清空', 360, dataY + 125, 10, 'white');
+
+    // Shared 到 Data 的箭头
+    drawArrow(400, 500, 400, 530);
+
+    // 7. 配置文件层
+    const configY = 530;
+    drawRoundedRect(600, configY, 650, 120, 10, colors.config);
+
+    drawText('配置文件 (JSON)', 925, configY + 20, 16, 'bold', 'white');
+    drawText('持久化存储在用户目录', 925, configY + 40, 12, colors.lightText);
+
+    // MCP Config
+    drawRoundedRect(630, configY + 55, 280, 55, 8, 'rgba(255,255,255,0.4)');
+    drawText('~/.workany/mcp.json', 770, configY + 75, 13, 'bold');
+    drawText('MCP 服务器配置', 770, configY + 92, 10, colors.lightText);
+    drawText('stdio | HTTP 模式', 770, configY + 105, 9, colors.lightText);
+
+    // Claude Settings
+    drawRoundedRect(930, configY + 55, 280, 55, 8, 'rgba(255,255,255,0.4)');
+    drawText('~/.claude/settings.json', 1070, configY + 75, 13, 'bold');
+    drawText('Claude 设置', 1070, configY + 92, 10, colors.lightText);
+    drawText('API 密钥、MCP 配置', 1070, configY + 105, 9, colors.lightText);
+
+    // Shared 到 Config 的双向箭头
+    drawDoubleArrow(925, 500, 925, 530);
+
+    // 8. 底部：技术栈
+    const techY = 680;
+    drawRoundedRect(150, techY, 1100, 80, 10, '#6C5CE7');
+
+    drawText('技术栈', 700, techY + 20, 16, 'bold', 'white');
+
+    // 技术栈项目
+    const techStack = [
+      { name: 'Hono v4.7', x: 200 },
+      { name: 'TypeScript', x: 320 },
+      { name: 'Node.js 20+', x: 440 },
+      { name: 'Agent SDK', x: 560 },
+      { name: 'Sandbox Runtime', x: 680 },
+      { name: 'MCP SDK', x: 820 },
+      { name: 'Nanoid', x: 940 },
+      { name: 'Zod', x: 1040 }
+    ];
+
+    techStack.forEach(tech => {
+      drawRoundedRect(tech.x - 60, techY + 35, 120, 30, 6, 'rgba(255,255,255,0.3)');
+      drawText(tech.name, tech.x, techY + 50, 11, 'normal', 'white');
+    });
+
+    // 9. 数据流说明
+    const flowY = 780;
+    drawRoundedRect(150, flowY, 1100, 100, 10, '#FFEAA7');
+
+    drawText('数据流说明', 700, flowY + 20, 16, 'bold', '#2D3436');
+
+    const flows = [
+      '1. 前端请求 → API 路由层 → 核心业务层 → 扩展插件层 → 共享服务层',
+      '2. Agent 执行：创建 Sessions Map → 执行任务 → 存储 Plans Map → TTL 过期清理',
+      '3. 配置读写：双向操作 ~/.workany/mcp.json 和 ~/.claude/settings.json',
+      '4. 沙箱执行：自动选择 Codex → Claude → Native（降级策略）'
+    ];
+
+    flows.forEach((flow, index) => {
+      drawText(flow, 700, flowY + 45 + index * 18, 12, 'normal', '#2D3436');
+    });
+
+    // 10. 底部标注
+    drawText('WorkAny API v0.1.16 | 无传统数据库架构 | 内存 + JSON 配置文件', 700, 890, 12, 'normal', colors.lightText);
+  </script>
+</body>
+</html>

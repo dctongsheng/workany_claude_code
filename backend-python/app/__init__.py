@@ -1,0 +1,1 @@
+"""WorkAny FastAPI Backend Application."""
